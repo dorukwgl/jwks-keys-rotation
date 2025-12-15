@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Simple JWT service for signing and validating tokens.
