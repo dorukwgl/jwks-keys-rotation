@@ -1,6 +1,6 @@
 <springProfile name="prod">
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/log/auth-dist/app.log</file>
+        <file>/var/log/jwks/app.log</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>/var/log/jwks/app.%d{yyyy-MM-dd}.log</fileNamePattern>
