@@ -31,7 +31,7 @@ public class AuthController {
 
     /**
      * Generate a JWT token for the given subject.
-     *
+     * <p>
      * POST /auth/token
      * Body: {"subject": "username"}
      */
@@ -40,7 +40,7 @@ public class AuthController {
         LOG.debug("Generating token for subject: {}", request.getSubject());
 
         try {
-            String token = jwtService.generateToken(request.getSubject());
+            String token = jwtService.generateToken(request.getSubject(), request.getAudience(), request.getScopes());
 
             TokenResponse response = new TokenResponse(token, tokenExpiryMinutes * 60);
             return HttpResponse.ok(response);

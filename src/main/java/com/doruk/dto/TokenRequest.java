@@ -1,8 +1,11 @@
 package com.doruk.dto;
 
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotBlank;
+
+import java.util.List;
 
 /**
  * Request DTO for token generation.
@@ -11,22 +14,30 @@ import jakarta.validation.constraints.NotBlank;
 @Introspected
 @Serdeable
 public class TokenRequest {
+    @NotBlank
+    private String aud;
 
     @NotBlank
-    private String subject;
+    private String sub;
 
-    public TokenRequest() {
-    }
+    @Nullable
+    private List<Integer> scp;
 
-    public TokenRequest(String subject) {
-        this.subject = subject;
+    public TokenRequest(String sub, String aud, List<Integer> scp) {
+        this.sub = sub;
+        this.aud = aud;
+        this.scp = scp;
     }
 
     public String getSubject() {
-        return subject;
+        return sub;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
+    public String getAudience() {
+        return aud;
+    }
+
+    public List<Integer> getScopes() {
+        return scp;
     }
 }

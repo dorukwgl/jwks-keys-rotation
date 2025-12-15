@@ -1,8 +1,9 @@
 package com.doruk.service;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -11,7 +12,10 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Simple JWT service for signing and validating tokens.
@@ -37,18 +41,20 @@ public class JwtService {
      * @param subject the subject (username/identifier)
      * @return signed JWT as string
      */
-    public String generateToken(String subject) {
+    public String generateToken(String subject, String audience, List<Integer> scopes) {
         try {
             ECKey primaryKey = keyStorageService.getPrimaryKey();
 
             // Create JWT claims
-            Date now = new Date();
-            Date expiry = new Date(now.getTime() + (tokenExpiryMinutes * 60 * 1000));
+            Instant now = Instant.now();
 
-            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+            JWTClaimsSet claims = new JWTClaimsSet.Builder()
                     .subject(subject)
-                    .issueTime(now)
-                    .expirationTime(expiry)
+                    .issuer("com.doruk.jwks")
+                    .audience(audience)
+                    .issueTime(Date.from(now))
+                    .claim("scp", scopes)
+                    .expirationTime(Date.from(now.plusSeconds(tokenExpiryMinutes * 60)))
                     .build();
 
             // Create JWT header with key ID
@@ -57,7 +63,7 @@ public class JwtService {
                     .build();
 
             // Create signed JWT
-            SignedJWT signedJWT = new SignedJWT(header, claimsSet);
+            SignedJWT signedJWT = new SignedJWT(header, claims);
 
             // Sign with primary key
             JWSSigner signer = new ECDSASigner(primaryKey);

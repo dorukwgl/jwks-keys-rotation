@@ -1,5 +1,6 @@
 package com.doruk.service;
 
+import com.doruk.dto.ActiveKeys;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
@@ -15,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -30,16 +30,13 @@ public class KeyStorageService {
     private final Path keysDirectory;
     private final Path primaryKeyPath;
     private final Path secondaryKeyPath;
-    private final Path metadataPath;
 
-    private ECKey primaryKey;
-    private ECKey secondaryKey;
+    private volatile ActiveKeys activeKeys;
 
     public KeyStorageService(@Value("${jwk.storage.directory:./keys}") String keysDirectory) {
         this.keysDirectory = Paths.get(keysDirectory);
         this.primaryKeyPath = this.keysDirectory.resolve("primary.jwk");
         this.secondaryKeyPath = this.keysDirectory.resolve("secondary.jwk");
-        this.metadataPath = this.keysDirectory.resolve("metadata.json");
 
         initialize();
     }
@@ -68,18 +65,18 @@ public class KeyStorageService {
     private void generateInitialKeys() throws JOSEException, IOException {
         LOG.info("Generating initial EC P-256 key pair...");
 
-        primaryKey = new ECKeyGenerator(Curve.P_256)
+        var primaryKey = new ECKeyGenerator(Curve.P_256)
                 .keyUse(KeyUse.SIGNATURE)
-                .keyID("primary-" + UUID.randomUUID().toString().substring(0, 8))
+                .keyID("d-key-" + UUID.randomUUID().toString().substring(0, 8))
                 .algorithm(com.nimbusds.jose.JWSAlgorithm.ES256)
                 .generate();
 
-        secondaryKey = new ECKeyGenerator(Curve.P_256)
+        var secondaryKey = new ECKeyGenerator(Curve.P_256)
                 .keyUse(KeyUse.SIGNATURE)
-                .keyID("secondary-" + UUID.randomUUID().toString().substring(0, 8))
+                .keyID("d-key-" + UUID.randomUUID().toString().substring(0, 8))
                 .algorithm(com.nimbusds.jose.JWSAlgorithm.ES256)
                 .generate();
-
+        activeKeys = new ActiveKeys(primaryKey, secondaryKey);
         saveKeys();
 
         LOG.info("Successfully generated and stored initial keys");
@@ -91,8 +88,9 @@ public class KeyStorageService {
         String primaryJson = Files.readString(primaryKeyPath);
         String secondaryJson = Files.readString(secondaryKeyPath);
 
-        primaryKey = ECKey.parse(primaryJson);
-        secondaryKey = ECKey.parse(secondaryJson);
+        var primaryKey = ECKey.parse(primaryJson);
+        var secondaryKey = ECKey.parse(secondaryJson);
+        activeKeys = new ActiveKeys(primaryKey, secondaryKey);
 
         LOG.info("Loaded existing keys from storage");
         LOG.info("Primary key ID: {}", primaryKey.getKeyID());
@@ -100,10 +98,10 @@ public class KeyStorageService {
     }
 
     private void saveKeys() throws IOException {
-        Files.writeString(primaryKeyPath, primaryKey.toJSONString(),
+        Files.writeString(primaryKeyPath, activeKeys.primary().toJSONString(),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-        Files.writeString(secondaryKeyPath, secondaryKey.toJSONString(),
+        Files.writeString(secondaryKeyPath, activeKeys.secondary().toJSONString(),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
         // Set restrictive permissions on Unix-like systems
@@ -121,39 +119,29 @@ public class KeyStorageService {
     public synchronized void rotateKeys() throws JOSEException, IOException {
         LOG.info("Starting key rotation...");
 
-        // Move primary to secondary
-        secondaryKey = primaryKey;
-
         // Generate new primary
-        primaryKey = new ECKeyGenerator(Curve.P_256)
+        var newPrimaryKey = new ECKeyGenerator(Curve.P_256)
                 .keyUse(KeyUse.SIGNATURE)
-                .keyID("primary-" + UUID.randomUUID().toString().substring(0, 8))
+                .keyID("d-key-" + UUID.randomUUID().toString().substring(0, 8))
                 .algorithm(com.nimbusds.jose.JWSAlgorithm.ES256)
                 .generate();
+        var newSecondary = activeKeys.primary();
+
+        activeKeys = new ActiveKeys(newPrimaryKey, newSecondary);
 
         // Save to disk
         saveKeys();
-        updateMetadata();
 
         LOG.info("Key rotation completed successfully");
-        LOG.info("New primary key ID: {}", primaryKey.getKeyID());
-    }
-
-    private void updateMetadata() throws IOException {
-        String metadata = String.format(
-                "{\"lastRotation\":\"%s\"}",
-                Instant.now()
-        );
-        Files.writeString(metadataPath, metadata,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        LOG.info("New primary key ID: {}", activeKeys.primary().getKeyID());
     }
 
     public ECKey getPrimaryKey() {
-        return primaryKey;
+        return activeKeys.primary();
     }
 
     public ECKey getSecondaryKey() {
-        return secondaryKey;
+        return activeKeys.secondary();
     }
 
     public Path getKeysDirectory() {
