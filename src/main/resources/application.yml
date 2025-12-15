@@ -10,7 +10,7 @@ jwt:
 
 jwk:
   storage:
-    directory: ./keys
+    directory: /var/lib/jwks
     enabled: true
   rotation:
     enabled: true
