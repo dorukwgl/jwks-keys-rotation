@@ -1,0 +1,31 @@
+micronaut:
+  application:
+    name: jwks
+  server:
+    port: 8080
+
+jwt:
+  token:
+    expiry-minutes: 10
+
+jwk:
+  storage:
+    directory: ./keys
+    enabled: true
+  rotation:
+    enabled: true
+
+# These keys match the @Value annotations in KeyRotationScheduler.java
+key:
+  rotation:
+    ttl-minutes: 20
+    initial-delay-minutes: 20
+
+endpoints:
+  health:
+    enabled: true
+    sensitive: false
+
+logging:
+  level:
+    com.doruk.jwks: INFO
