@@ -18,7 +18,7 @@ jwk:
 # These keys match the @Value annotations in KeyRotationScheduler.java
 key:
   rotation:
-    ttl-minutes: 20
+    ttl-minutes: 60
     initial-delay-minutes: 20
 
 endpoints:
