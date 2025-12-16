@@ -6,7 +6,7 @@ micronaut:
 
 jwt:
   token:
-    expiry-minutes: 10
+    expiry-minutes: ${TOKEN_EXPIRY_MINUTES:13}
 
 jwk:
   storage:
