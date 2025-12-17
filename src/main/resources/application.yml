@@ -19,7 +19,7 @@ jwk:
 key:
   rotation:
     ttl-minutes: 60
-    initial-delay-minutes: 20
+    initial-delay-minutes: 60
 
 endpoints:
   health:
