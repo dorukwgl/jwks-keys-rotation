@@ -1,0 +1,28 @@
+services:
+  jwks:
+    build: .
+    image: jwks:latest
+    container_name: jwks-server
+    restart: unless-stopped
+
+    ports:
+      # Exposed on 0.0.0.0 — accessible on LAN from any machine
+      # Micronaut services set:
+      #   micronaut.security.token.jwt.signatures.jwks.url=http://<this-host>:41518/.well-known/jwks.json
+      - "41518:41518"
+
+    volumes:
+      # Persist JWK keystore across restarts — keys survive container rebuild
+      - ./data/jwks:/var/lib/jwks
+
+    environment:
+      # Token expiry in minutes (optional, default 13)
+      - TOKEN_EXPIRY_MINUTES=${TOKEN_EXPIRY_MINUTES:-13}
+
+    healthcheck:
+      # Assumes busybox wget in the nonroot image
+      test: wget -qO- http://localhost:41518/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
