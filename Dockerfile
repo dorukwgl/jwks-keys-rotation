@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.4
 #
 # JWKS Server — build & run with Liberica hardened JRE
 # ======================================================
@@ -17,9 +16,7 @@ COPY pom.xml .
 COPY src src
 
 # Build the application JAR (AOT is disabled by default)
-# Cache Maven repository across builds for faster iteration
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn package -DskipTests
+RUN mvn package -DskipTests
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────────────────
 # Liberica hardened JRE 25 — CDS enabled, non-root user, glibc
