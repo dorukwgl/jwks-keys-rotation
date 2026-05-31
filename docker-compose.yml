@@ -10,8 +10,7 @@ services:
       # Micronaut services set:
       #   micronaut.security.token.jwt.signatures.jwks.url=http://<this-host>:41518/.well-known/jwks.json
       - "41518:41518"
-    environment:
-      MICRONAUT_ENVIRONMENTS: prod
+
     volumes:
       # Persist JWK keystore across restarts — keys survive container rebuild
       - ./data/jwks:/var/lib/jwks
@@ -19,7 +18,7 @@ services:
     environment:
       # Token expiry in minutes (optional, default 13)
       - TOKEN_EXPIRY_MINUTES=${TOKEN_EXPIRY_MINUTES:-13}
-
+      - MICRONAUT_ENVIRONMENTS: ${MICRONAUT_ENVIRONMENTS:-prod}
     healthcheck:
       # Assumes busybox wget in the nonroot image
       test: wget -qO- http://localhost:41518/health
