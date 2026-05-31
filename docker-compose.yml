@@ -10,7 +10,8 @@ services:
       # Micronaut services set:
       #   micronaut.security.token.jwt.signatures.jwks.url=http://<this-host>:41518/.well-known/jwks.json
       - "41518:41518"
-
+    environment:
+      MICRONAUT_ENVIRONMENTS: prod
     volumes:
       # Persist JWK keystore across restarts — keys survive container rebuild
       - ./data/jwks:/var/lib/jwks
