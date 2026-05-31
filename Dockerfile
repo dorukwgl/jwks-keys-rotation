@@ -28,6 +28,11 @@ WORKDIR /app
 # Copy the fat JAR from the builder stage
 COPY --from=builder /build/target/jwks-0.1.jar app.jar
 
+# Key storage directory — ownership matches appuser (UID 10001)
+USER root
+RUN mkdir -p /var/lib/jwks && chown -R 10001:10001 /var/lib/jwks
+USER appuser
+
 # Application port
 EXPOSE 41518
 

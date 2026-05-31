@@ -18,8 +18,8 @@ services:
 
     volumes:
       # Persist JWK keystore across restarts — keys survive container rebuild
-      - ./data/jwks:/var/lib/jwks
-      
+      - jwks-data:/var/lib/jwks
+
     healthcheck:
       # Assumes busybox wget in the nonroot image
       test: wget -qO- http://localhost:41518/health
@@ -27,3 +27,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
+
+volumes:
+  jwks-data:
