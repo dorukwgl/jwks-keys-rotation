@@ -13,7 +13,9 @@ services:
 
     environment:
         # Token expiry in minutes (optional, default 13)
-        TOKEN_EXPIRY_MINUTES: "${TOKEN_EXPIRY_MINUTES:-13}"
+        TOKEN_EXPIRY_MINUTES: "${TOKEN_EXPIRY_MINUTES:-15}"
+        # JWKS key rotation interval in minutes (optional, default 120)
+        JWK_ROTATION_INTERVAL_MINUTES: "${JWK_ROTATION_INTERVAL_MINUTES:-960}"
         MICRONAUT_ENVIRONMENTS: "prod"
 
     volumes:
